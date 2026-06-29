@@ -19,8 +19,8 @@
                 <x-stat label="Último consumo"
                         :value="$stats->consumoUltimoL100() ? number_format($stats->consumoUltimoL100(), 2, ',', '.').' L/100km' : '—'" />
                 <x-stat label="Nafta / litro (prom.)"
-                        :value="$stats->precioLitroPromedio() !== null ? money($stats->precioLitroPromedio()) : '—'" />
-                <x-stat label="Total combustible" :value="money($stats->totalCombustible())" />
+                        :value="$stats->precioLitroPromedio() !== null ? money_active($stats->precioLitroPromedio()) : '—'" />
+                <x-stat label="Total combustible" :value="money_active($stats->totalCombustible())" />
             </div>
 
             <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
@@ -42,8 +42,8 @@
                                 <td class="px-4 py-3">{{ $c->fecha->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 text-right">{{ km($c->odometro) }}</td>
                                 <td class="px-4 py-3 text-right">{{ number_format($c->litros, 2, ',', '.') }}</td>
-                                <td class="px-4 py-3 text-right">{{ $c->precio_litro !== null ? money($c->precio_litro) : '—' }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ money($c->costo_total) }}</td>
+                                <td class="px-4 py-3 text-right">{{ $c->precio_litro !== null ? show_money($c->precio_litro, $c->usdRate(current_usd_tipo())) : '—' }}</td>
+                                <td class="px-4 py-3 text-right font-medium">{{ show_money($c->montoArs(), $c->usdRate(current_usd_tipo())) }}</td>
                                 <td class="px-4 py-3 text-center">{{ $c->tanque_lleno ? '✓' : '·' }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     <a href="{{ route('combustible.edit', $c) }}" class="text-indigo-600 hover:underline">Editar</a>

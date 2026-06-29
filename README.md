@@ -19,7 +19,11 @@ Construida con **Laravel 13 + Blade + Tailwind**, pensada para deployar en
 - **Tablero**: consumo promedio, costo por km, gasto total, gasto mensual
   (últimos 6 meses) y gastos por categoría.
 - **Multi-vehículo**: el modelo soporta varios autos con selector.
-- **Export CSV** de cada sección.
+- **Ancla en dólares**: cargás todo en pesos, pero podés **togglear ARS/USD**.
+  Cada gasto guarda la cotización del dólar **de su fecha** (snapshot histórico),
+  así un gasto viejo se ve en USD a lo que realmente costó entonces y no se
+  distorsiona con la inflación posterior.
+- **Export CSV** de cada sección (incluye las cotizaciones `usd_blue` y `usd_oficial`).
 - **Login con Google** restringido por la variable `ALLOWED_EMAILS`.
 
 ## Cómo funciona el login (importante)
@@ -60,6 +64,29 @@ php artisan test
 ```
 
 ---
+
+## Ancla en dólares (inflación)
+
+En Argentina medir gastos en pesos a lo largo del tiempo no sirve como ancla.
+La app resuelve esto guardando, por cada gasto, la cotización del dólar **del
+día de ese gasto** — tanto **blue** como **oficial** (columnas `usd_blue` y
+`usd_oficial`). El monto en USD de cada registro queda fijo e histórico.
+
+La feature **siempre está activa, no requiere configuración**. En la barra hay
+un toggle **ARS/USD** y, al lado, un selector **blue/oficial** para elegir con
+qué cotización convertir. Los totales se recalculan sumando el USD por fila.
+
+- Cotizaciones: [dolarapi.com](https://dolarapi.com) (actual) y
+  [argentinadatos.com](https://argentinadatos.com) (histórica). Gratis, sin API
+  key. **Producción debe permitir salida HTTPS a esos hosts** (Laravel Cloud lo
+  permite por defecto).
+- Si la API no responde al guardar, el registro se guarda igual sin cotización
+  y al mostrarlo en USD cae a la cotización actual.
+- Para completar registros viejos (o cargados sin conexión):
+
+  ```bash
+  php artisan rates:backfill
+  ```
 
 ## Crear credenciales de Google OAuth
 

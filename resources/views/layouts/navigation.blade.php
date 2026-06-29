@@ -30,6 +30,32 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
+                <!-- Currency toggle ARS / USD + quote selector -->
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs">
+                        @foreach(['ARS', 'USD'] as $m)
+                            <form method="POST" action="{{ route('moneda.set') }}">
+                                @csrf
+                                <input type="hidden" name="moneda" value="{{ $m }}">
+                                <button class="px-2.5 py-1 {{ ($moneda ?? 'ARS') === $m ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">{{ $m }}</button>
+                            </form>
+                        @endforeach
+                    </div>
+
+                    @if(($moneda ?? 'ARS') === 'USD')
+                        <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs"
+                             title="{{ ($usdActual ?? null) ? 'Dólar '.($usdTipo ?? 'blue').' hoy: $'.number_format($usdActual, 2, ',', '.') : 'Cotización actual no disponible' }}">
+                            @foreach((array) config('carcare.usd_tipos', ['blue']) as $t)
+                                <form method="POST" action="{{ route('usd_tipo.set') }}">
+                                    @csrf
+                                    <input type="hidden" name="tipo" value="{{ $t }}">
+                                    <button class="px-2.5 py-1 capitalize {{ ($usdTipo ?? 'blue') === $t ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">{{ $t }}</button>
+                                </form>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
                 <!-- Vehicle switcher -->
                 @if(($vehiculos ?? collect())->count() > 1)
                     <form method="POST" x-data

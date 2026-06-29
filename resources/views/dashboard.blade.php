@@ -27,24 +27,29 @@
                             :value="$stats->consumoPromedioL100() ? number_format($stats->consumoPromedioL100(), 2, ',', '.').' L/100km' : '—'"
                             sub="Método tanque lleno" />
                     <x-stat label="Costo por km"
-                            :value="$stats->costoPorKm() !== null ? money($stats->costoPorKm()) : '—'"
+                            :value="$stats->costoPorKm() !== null ? money_active($stats->costoPorKm()) : '—'"
                             sub="Todo incluido" />
                     <x-stat label="Nafta / litro (prom.)"
-                            :value="$stats->precioLitroPromedio() !== null ? money($stats->precioLitroPromedio()) : '—'" />
+                            :value="$stats->precioLitroPromedio() !== null ? money_active($stats->precioLitroPromedio()) : '—'" />
                     <x-stat label="Distancia registrada"
                             :value="km($stats->distanciaRecorrida())" />
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <x-stat label="Total combustible" :value="money($stats->totalCombustible())" />
-                    <x-stat label="Total mantenimiento" :value="money($stats->totalMantenimiento())" />
-                    <x-stat label="Total otros gastos" :value="money($stats->totalGastos())" />
+                    <x-stat label="Total combustible" :value="money_active($stats->totalCombustible())" />
+                    <x-stat label="Total mantenimiento" :value="money_active($stats->totalMantenimiento())" />
+                    <x-stat label="Total otros gastos" :value="money_active($stats->totalGastos())" />
                 </div>
 
                 <div class="bg-indigo-600 text-white shadow-sm sm:rounded-lg p-6 flex items-center justify-between">
                     <div>
-                        <div class="text-indigo-100 text-sm">Gasto total del vehículo</div>
-                        <div class="text-3xl font-bold">{{ money($stats->totalGeneral()) }}</div>
+                        <div class="text-indigo-100 text-sm">
+                            Gasto total del vehículo
+                            @if(current_currency() === 'USD' && ($usdActual ?? null))
+                                <span class="text-indigo-200">· hoy {{ $usdTipo ?? 'blue' }} ${{ number_format($usdActual, 0, ',', '.') }}</span>
+                            @endif
+                        </div>
+                        <div class="text-3xl font-bold">{{ money_active($stats->totalGeneral()) }}</div>
                     </div>
                     <div class="flex gap-2">
                         <a href="{{ route('combustible.create') }}"><x-secondary-button>+ Combustible</x-secondary-button></a>
@@ -63,7 +68,7 @@
                                 <div class="flex-1 bg-gray-100 rounded h-5">
                                     <div class="bg-indigo-500 h-5 rounded" style="width: {{ round($total / $maxMes * 100) }}%"></div>
                                 </div>
-                                <span class="w-32 text-right text-sm text-gray-700">{{ money($total) }}</span>
+                                <span class="w-32 text-right text-sm text-gray-700">{{ money_active($total) }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -76,7 +81,7 @@
                         @forelse($gastosPorCategoria as $cat => $total)
                             <div class="flex justify-between py-1 border-b last:border-0 text-sm">
                                 <span class="text-gray-600">{{ \App\Models\Gasto::CATEGORIAS[$cat] ?? ucfirst($cat) }}</span>
-                                <span class="font-medium">{{ money($total) }}</span>
+                                <span class="font-medium">{{ money_active($total) }}</span>
                             </div>
                         @empty
                             <p class="text-sm text-gray-400">Sin gastos cargados.</p>
@@ -90,7 +95,7 @@
                             <div class="flex justify-between py-1 border-b last:border-0 text-sm">
                                 <span class="text-gray-600">{{ \App\Models\Mantenimiento::TIPOS[$m->tipo] ?? ucfirst($m->tipo) }}
                                     <span class="text-gray-400">· {{ $m->fecha->format('d/m/Y') }}</span></span>
-                                <span class="font-medium">{{ money($m->costo) }}</span>
+                                <span class="font-medium">{{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}</span>
                             </div>
                         @empty
                             <p class="text-sm text-gray-400">Sin mantenimientos cargados.</p>

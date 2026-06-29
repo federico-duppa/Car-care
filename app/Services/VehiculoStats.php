@@ -6,33 +6,37 @@ use App\Models\Vehiculo;
 use Illuminate\Support\Carbon;
 
 /**
- * Computes derived statistics for a vehicle: fuel consumption (full-to-full
- * method), cost per km, and spending totals. Kept deliberately simple and
- * dependency-free so it's easy to follow.
+ * Derived statistics for a vehicle: fuel consumption (full-to-full), cost per
+ * km and spending totals. Amounts are returned in the requested currency:
+ * 'ARS' uses raw pesos; 'USD' converts each record by its own snapshotted
+ * historical rate for the chosen quote (blue/oficial), falling back to a
+ * supplied current rate for records without a snapshot.
  */
 class VehiculoStats
 {
-    public function __construct(private Vehiculo $vehiculo) {}
+    private const USD_COLS = ['blue' => 'usd_blue', 'oficial' => 'usd_oficial'];
 
-    public static function for(Vehiculo $vehiculo): self
+    public function __construct(
+        private Vehiculo $vehiculo,
+        private string $moneda = 'ARS',
+        private string $tipo = 'blue',
+        private ?float $fallbackRate = null,
+    ) {}
+
+    public static function for(Vehiculo $vehiculo, string $moneda = 'ARS', string $tipo = 'blue', ?float $fallbackRate = null): self
     {
-        return new self($vehiculo);
+        return new self($vehiculo, $moneda, $tipo, $fallbackRate);
     }
 
+    // ---- Consumption (currency-independent) --------------------------------
+
     /**
-     * Per-interval consumption using the full-tank-to-full-tank method.
-     * Returns a list of intervals (oldest first), each with distance, litres
-     * burned, L/100km and km/L. Partial fills between two full tanks are
-     * accumulated into the next full-tank interval.
-     *
      * @return array<int, array{carga: \App\Models\CargaCombustible, distancia: int, litros: float, l_100km: float, km_l: float}>
      */
     public function intervalosConsumo(): array
     {
         $cargas = $this->vehiculo->cargas()
-            ->orderBy('odometro')
-            ->orderBy('fecha')
-            ->get();
+            ->orderBy('odometro')->orderBy('fecha')->get();
 
         $intervalos = [];
         $odoUltimoLleno = null;
@@ -64,7 +68,6 @@ class VehiculoStats
         return $intervalos;
     }
 
-    /** Average consumption across all intervals (L/100km), or null if N/A. */
     public function consumoPromedioL100(): ?float
     {
         $intervalos = $this->intervalosConsumo();
@@ -78,14 +81,12 @@ class VehiculoStats
         return $dist > 0 ? round($litros / $dist * 100, 2) : null;
     }
 
-    /** Most recent interval consumption (L/100km), or null. */
     public function consumoUltimoL100(): ?float
     {
         $intervalos = $this->intervalosConsumo();
         return empty($intervalos) ? null : end($intervalos)['l_100km'];
     }
 
-    /** Distance covered according to fuel odometer readings. */
     public function distanciaRecorrida(): int
     {
         $min = $this->vehiculo->cargas()->min('odometro');
@@ -94,51 +95,52 @@ class VehiculoStats
         return ($min !== null && $max !== null) ? (int) ($max - $min) : 0;
     }
 
+    // ---- Money (currency-aware) --------------------------------------------
+
     public function totalCombustible(): float
     {
-        return (float) $this->vehiculo->cargas()->sum('costo_total');
+        return $this->sum('cargas', 'costo_total');
     }
 
     public function totalMantenimiento(): float
     {
-        return (float) $this->vehiculo->mantenimientos()->sum('costo');
+        return $this->sum('mantenimientos', 'costo');
     }
 
     public function totalGastos(): float
     {
-        return (float) $this->vehiculo->gastos()->sum('monto');
+        return $this->sum('gastos', 'monto');
     }
 
     public function totalGeneral(): float
     {
-        return $this->totalCombustible() + $this->totalMantenimiento() + $this->totalGastos();
+        return round($this->totalCombustible() + $this->totalMantenimiento() + $this->totalGastos(), 2);
     }
 
-    /** Total cost per km (all spending / distance driven), or null. */
     public function costoPorKm(): ?float
     {
         $dist = $this->distanciaRecorrida();
         return $dist > 0 ? round($this->totalGeneral() / $dist, 2) : null;
     }
 
-    /** Average price per litre across all fills, or null. */
     public function precioLitroPromedio(): ?float
     {
         $litros = (float) $this->vehiculo->cargas()->sum('litros');
-        $costo = $this->totalCombustible();
 
-        return $litros > 0 ? round($costo / $litros, 2) : null;
+        return $litros > 0 ? round($this->totalCombustible() / $litros, 2) : null;
     }
 
-    /** Spending grouped by expense category (descending). */
+    /** Spending grouped by expense category (descending), in active currency. */
     public function gastosPorCategoria(): array
     {
+        [$expr, $bind] = $this->montoExpr('monto');
+
         return $this->vehiculo->gastos()
-            ->selectRaw('categoria, SUM(monto) as total')
+            ->selectRaw("categoria, {$expr} as total", $bind)
             ->groupBy('categoria')
             ->orderByDesc('total')
             ->pluck('total', 'categoria')
-            ->map(fn ($v) => (float) $v)
+            ->map(fn ($v) => round((float) $v, 2))
             ->all();
     }
 
@@ -149,8 +151,7 @@ class VehiculoStats
 
         $series = [];
         for ($i = 0; $i < $meses; $i++) {
-            $m = (clone $desde)->addMonths($i);
-            $series[$m->format('Y-m')] = 0.0;
+            $series[(clone $desde)->addMonths($i)->format('Y-m')] = 0.0;
         }
 
         $fuentes = [
@@ -160,16 +161,65 @@ class VehiculoStats
         ];
 
         foreach ($fuentes as [$query, $col]) {
+            $rateCol = $this->rateCol();
             $rows = $query->where('fecha', '>=', $desde->toDateString())
-                ->get(['fecha', $col]);
+                ->get(['fecha', $col, $rateCol]);
+
             foreach ($rows as $row) {
                 $key = Carbon::parse($row->fecha)->format('Y-m');
                 if (isset($series[$key])) {
-                    $series[$key] += (float) $row->{$col};
+                    $series[$key] += $this->convertir((float) $row->{$col}, $row->{$rateCol});
                 }
             }
         }
 
-        return $series;
+        return array_map(fn ($v) => round($v, 2), $series);
+    }
+
+    // ---- Internals ----------------------------------------------------------
+
+    /** Sum a column over a relation in the active currency. */
+    private function sum(string $relation, string $col): float
+    {
+        [$expr, $bind] = $this->montoExpr($col);
+
+        return round((float) $this->vehiculo->{$relation}()
+            ->selectRaw("{$expr} as agg", $bind)->value('agg'), 2);
+    }
+
+    /** Snapshot column for the active quote. */
+    private function rateCol(): string
+    {
+        return self::USD_COLS[$this->tipo] ?? 'usd_blue';
+    }
+
+    /** SQL aggregate expression (+ bindings) for the active currency. */
+    private function montoExpr(string $col): array
+    {
+        if ($this->moneda !== 'USD') {
+            return ["COALESCE(SUM({$col}), 0)", []];
+        }
+
+        $rate = $this->rateCol();
+        $fb = ($this->fallbackRate && $this->fallbackRate > 0) ? $this->fallbackRate : null;
+
+        if ($fb === null) {
+            // No current-rate fallback: only count rows that have a snapshot.
+            return ["COALESCE(SUM(CASE WHEN {$rate} > 0 THEN {$col} / {$rate} ELSE 0 END), 0)", []];
+        }
+
+        return ["COALESCE(SUM({$col} / COALESCE(NULLIF({$rate}, 0), ?)), 0)", [$fb]];
+    }
+
+    /** Convert a single ARS amount per the active currency. */
+    private function convertir(float $ars, $rate): float
+    {
+        if ($this->moneda !== 'USD') {
+            return $ars;
+        }
+
+        $r = ($rate && $rate > 0) ? (float) $rate : $this->fallbackRate;
+
+        return ($r && $r > 0) ? $ars / $r : 0.0;
     }
 }

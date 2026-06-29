@@ -20,7 +20,12 @@ class CombustibleController extends Controller
             ->orderByDesc('fecha')->orderByDesc('odometro')
             ->paginate(25);
 
-        $stats = VehiculoStats::for($vehiculo);
+        $stats = VehiculoStats::for(
+            $vehiculo,
+            $request->attributes->get('moneda', 'ARS'),
+            $request->attributes->get('usd_tipo', 'blue'),
+            $request->attributes->get('usd_actual'),
+        );
 
         return view('combustible.index', compact('vehiculo', 'cargas', 'stats'));
     }

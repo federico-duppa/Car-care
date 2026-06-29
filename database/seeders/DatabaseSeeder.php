@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
                 'odometro' => $odo, 'litros' => $litros,
                 'costo_total' => $litros * 1100, 'tanque_lleno' => true,
                 'estacion' => 'YPF',
+                'usd_blue' => 1200 + (6 - $i) * 50,    // dólar subiendo con el tiempo
+                'usd_oficial' => 1000 + (6 - $i) * 35,
             ]);
         }
         $vehiculo->update(['km_actual' => $odo]);
@@ -51,27 +53,32 @@ class DatabaseSeeder extends Seeder
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subMonths(2)->toDateString(),
             'odometro' => 58000, 'tipo' => 'aceite', 'costo' => 85000, 'taller' => 'Lubricentro',
+            'usd_blue' => 1380, 'usd_oficial' => 1150,
         ]);
         Mantenimiento::create([
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subMonths(5)->toDateString(),
             'odometro' => 54000, 'tipo' => 'neumaticos', 'costo' => 420000, 'taller' => 'Gomería Centro',
+            'usd_blue' => 1250, 'usd_oficial' => 1080,
         ]);
 
         Gasto::create([
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subMonth()->toDateString(),
             'categoria' => 'seguro', 'monto' => 55000, 'descripcion' => 'Cuota mensual', 'recurrente' => true,
+            'usd_blue' => 1430, 'usd_oficial' => 1190,
         ]);
         Gasto::create([
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subMonths(3)->toDateString(),
             'categoria' => 'impuestos', 'monto' => 90000, 'descripcion' => 'Patente cuota',
+            'usd_blue' => 1330, 'usd_oficial' => 1120,
         ]);
         Gasto::create([
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subDays(10)->toDateString(),
             'categoria' => 'peajes', 'monto' => 4800,
+            'usd_blue' => 1460, 'usd_oficial' => 1200,
         ]);
     }
 }

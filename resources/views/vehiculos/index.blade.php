@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Vehículos</h2>
-            <a href="{{ route('vehiculos.create') }}"><x-primary-button>+ Agregar</x-primary-button></a>
+            <a href="{{ route('vehiculos.create') }}" class="self-start"><x-primary-button>+ Agregar</x-primary-button></a>
         </div>
     </x-slot>
 
@@ -11,8 +11,8 @@
             <x-flash />
 
             @forelse($vehiculos as $v)
-                <div class="bg-white shadow-sm sm:rounded-lg p-5 flex items-center justify-between">
-                    <div>
+                <div class="bg-white shadow-sm sm:rounded-lg p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
                         <div class="font-semibold text-gray-900">
                             {{ $v->nombre }}
                             @if($v->anio) <span class="text-gray-400 font-normal">· {{ $v->anio }}</span> @endif
@@ -24,7 +24,7 @@
                             {{ $v->patente ?: 'Sin patente' }} · {{ km($v->km_actual) }}
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
                         @if(optional($vehiculoActivo)->id !== $v->id)
                             <form method="POST" action="{{ route('vehiculos.activar', $v) }}">
                                 @csrf

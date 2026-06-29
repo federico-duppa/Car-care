@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Mantenimiento</h2>
             <div class="flex gap-2">
                 <a href="{{ route('export.csv', 'mantenimientos') }}"><x-secondary-button>Exportar CSV</x-secondary-button></a>
@@ -13,40 +13,35 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             <x-flash />
 
-            <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 text-gray-500 text-left">
-                        <tr>
-                            <th class="px-4 py-3">Fecha</th>
-                            <th class="px-4 py-3">Tipo</th>
-                            <th class="px-4 py-3 text-right">Odómetro</th>
-                            <th class="px-4 py-3">Taller</th>
-                            <th class="px-4 py-3 text-right">Costo</th>
-                            <th class="px-4 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        @forelse($mantenimientos as $m)
-                            <tr>
-                                <td class="px-4 py-3">{{ $m->fecha->format('d/m/Y') }}</td>
-                                <td class="px-4 py-3">{{ \App\Models\Mantenimiento::TIPOS[$m->tipo] ?? ucfirst($m->tipo) }}</td>
-                                <td class="px-4 py-3 text-right">{{ km($m->odometro) }}</td>
-                                <td class="px-4 py-3 text-gray-500">{{ $m->taller ?: '—' }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}</td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <a href="{{ route('mantenimientos.edit', $m) }}" class="text-indigo-600 hover:underline">Editar</a>
-                                    <form method="POST" action="{{ route('mantenimientos.destroy', $m) }}" class="inline"
-                                          onsubmit="return confirm('¿Eliminar este registro?')">
-                                        @csrf @method('DELETE')
-                                        <button class="text-red-600 hover:underline ml-2">Eliminar</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Sin mantenimientos registrados.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="bg-white shadow-sm sm:rounded-lg divide-y">
+                @forelse($mantenimientos as $m)
+                    <div class="p-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0 sm:flex-1">
+                            <div class="flex items-baseline justify-between gap-3">
+                                <span class="font-medium text-gray-900">{{ \App\Models\Mantenimiento::TIPOS[$m->tipo] ?? ucfirst($m->tipo) }}</span>
+                                <span class="font-semibold text-gray-900 sm:hidden">{{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}</span>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                {{ $m->fecha->format('d/m/Y') }} · {{ km($m->odometro) }}@if($m->taller) · {{ $m->taller }}@endif
+                            </div>
+                        </div>
+
+                        <div class="hidden sm:block sm:w-32 sm:text-right font-medium text-gray-900">
+                            {{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}
+                        </div>
+
+                        <div class="flex gap-4 text-sm sm:justify-end sm:w-32">
+                            <a href="{{ route('mantenimientos.edit', $m) }}" class="text-indigo-600 hover:underline">Editar</a>
+                            <form method="POST" action="{{ route('mantenimientos.destroy', $m) }}"
+                                  onsubmit="return confirm('¿Eliminar este registro?')">
+                                @csrf @method('DELETE')
+                                <button class="text-red-600 hover:underline">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <div class="p-8 text-center text-gray-400">Sin mantenimientos registrados.</div>
+                @endforelse
             </div>
 
             {{ $mantenimientos->links() }}

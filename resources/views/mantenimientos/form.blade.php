@@ -40,7 +40,7 @@
                                           :value="old('odometro', $mantenimiento->odometro)" />
                         </div>
                         <div>
-                            <x-input-label for="costo" value="Costo" />
+                            <x-input-label for="costo" value="Costo (ARS)" />
                             <x-text-input id="costo" name="costo" type="number" step="0.01" class="block mt-1 w-full"
                                           :value="old('costo', $mantenimiento->costo)" required />
                         </div>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Mi Auto">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- lower body -->
+  <rect x="10" y="33" width="44" height="9" rx="4.5" fill="#fff"/>
+  <!-- cabin / roof -->
+  <path fill="#fff" d="M20 35 L24.2 23.6 Q24.8 22 26.5 22 H37.5 Q39.2 22 39.8 23.6 L44 35 Z"/>
+  <!-- windows -->
+  <path fill="#4338ca" d="M24.6 33 L27.1 25 H36.9 L39.4 33 Z"/>
+  <rect x="31.1" y="24.2" width="1.8" height="8.8" fill="#fff"/>
+  <!-- headlight -->
+  <rect x="50" y="35.4" width="3.2" height="2.4" rx="1.2" fill="#fde68a"/>
+  <!-- wheels -->
+  <circle cx="22" cy="42.5" r="5.6" fill="#1e1b4b"/>
+  <circle cx="22" cy="42.5" r="2.2" fill="#fff"/>
+  <circle cx="42" cy="42.5" r="5.6" fill="#1e1b4b"/>
+  <circle cx="42" cy="42.5" r="2.2" fill="#fff"/>
+</svg>

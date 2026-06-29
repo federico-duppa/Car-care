@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\ExchangeRateService;
+use App\Services\RecordatorioService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
@@ -33,6 +34,11 @@ class ShareVehiculos
 
             View::share('vehiculos', $vehiculos);
             View::share('vehiculoActivo', $activo);
+
+            // Reminders due/overdue for the nav badge.
+            View::share('avisosCount', $activo
+                ? app(RecordatorioService::class)->contar($activo)
+                : 0);
 
             // Currency toggle (ARS/USD) + quote selector (blue/oficial).
             $tipos = (array) config('carcare.usd_tipos', ['blue']);

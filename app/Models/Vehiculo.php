@@ -34,6 +34,11 @@ class Vehiculo extends Model
         return $this->hasMany(Gasto::class);
     }
 
+    public function recordatorios(): HasMany
+    {
+        return $this->hasMany(Recordatorio::class);
+    }
+
     public function getNombreAttribute(): string
     {
         return trim("{$this->marca} {$this->modelo}");

@@ -5,7 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\GastoController;
 use App\Http\Controllers\MantenimientoController;
+use App\Http\Controllers\RecordatorioController;
 use App\Http\Controllers\VehiculoController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route(auth()->check() ? 'dashboard' : 'login'));
@@ -21,10 +23,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('mantenimientos', MantenimientoController::class)->except('show');
     Route::resource('gastos', GastoController::class)->except('show');
 
+    Route::resource('recordatorios', RecordatorioController::class)->except('show');
+    Route::post('recordatorios/{recordatorio}/resolver', [RecordatorioController::class, 'resolver'])
+        ->name('recordatorios.resolver');
+
     Route::get('export/{tipo}', [ExportController::class, 'csv'])->name('export.csv');
 
     // Toggle the display currency (ARS <-> USD), persisted in the session.
-    Route::post('moneda', function (\Illuminate\Http\Request $request) {
+    Route::post('moneda', function (Request $request) {
         $moneda = $request->input('moneda') === 'USD' ? 'USD' : 'ARS';
         $request->session()->put('moneda', $moneda);
 
@@ -32,7 +38,7 @@ Route::middleware('auth')->group(function () {
     })->name('moneda.set');
 
     // Choose which USD quote to convert with (blue / oficial).
-    Route::post('usd-tipo', function (\Illuminate\Http\Request $request) {
+    Route::post('usd-tipo', function (Request $request) {
         $tipos = (array) config('carcare.usd_tipos', ['blue']);
         $tipo = in_array($request->input('tipo'), $tipos, true) ? $request->input('tipo') : ($tipos[0] ?? 'blue');
         $request->session()->put('usd_tipo', $tipo);

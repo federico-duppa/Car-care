@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Gasto;
 use App\Models\Vehiculo;
+use App\Services\RecordatorioService;
 use Illuminate\Http\Request;
 
 class GastoController extends Controller
 {
+    public function __construct(private RecordatorioService $recordatorios) {}
+
     public function index(Request $request)
     {
         $vehiculo = $this->vehiculo($request);
@@ -45,7 +48,8 @@ class GastoController extends Controller
 
         $data = $this->validated($request);
         $data['user_id'] = $request->user()->id;
-        $vehiculo->gastos()->create($data);
+        $gasto = $vehiculo->gastos()->create($data);
+        $this->recordatorios->syncDesdeGasto($gasto);
 
         return redirect()->route('gastos.index')->with('status', 'Gasto registrado.');
     }
@@ -64,6 +68,7 @@ class GastoController extends Controller
     {
         $this->authorizeRecord($request, $gasto);
         $gasto->update($this->validated($request));
+        $this->recordatorios->syncDesdeGasto($gasto);
 
         return redirect()->route('gastos.index')->with('status', 'Gasto actualizado.');
     }
@@ -84,6 +89,7 @@ class GastoController extends Controller
             'monto' => ['required', 'numeric', 'min:0'],
             'descripcion' => ['nullable', 'string', 'max:255'],
             'recurrente' => ['nullable', 'boolean'],
+            'periodicidad_meses' => ['nullable', 'integer', 'min:1'],
         ]) + ['recurrente' => $request->boolean('recurrente')];
     }
 

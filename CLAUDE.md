@@ -59,6 +59,29 @@ Cada registro de dinero (`CargaCombustible`, `Mantenimiento`, `Gasto`) pertenece
 
 **Cotizaciones (`app/Services/ExchangeRateService.php`).** Siempre activo, sin variable de entorno. Actual desde dolarapi.com, histórica desde argentinadatos.com. Cacheado, **a prueba de fallos** (cualquier error → null, nunca rompe un guardado ni un render). Se auto-desactiva en tests (`app()->runningUnitTests()`) para no tocar la red; por eso las pruebas de conversión setean `usd_blue`/`usd_oficial` a mano.
 
+**Recordatorios / avisos (`app/Services/RecordatorioService.php` + modelo `Recordatorio`).** Motor de avisos hacia adelante, **sin job de fondo**: el estado (`vencido`/`proximo`/`ok`) se calcula al renderizar desde el km del vehículo (`km_actual`) y la fecha de hoy. Un solo modelo con discriminador `clase`:
+- `mantenimiento`: intervalo por km y/o meses atado a un `tipo` de `Mantenimiento::TIPOS`. El "último hecho" se deriva del **último `Mantenimiento` de ese tipo** (con fallback al baseline `base_odometro`/`base_fecha`), así al cargar un mantenimiento el aviso se **auto-avanza**.
+- `documento`: vencimiento por fecha (`base_fecha`) + `intervalo_meses` para renovar, con `numero` opcional. Tipos en `Recordatorio::DOCUMENTOS` (seguro/patente/vtv/licencia/otro).
+- `gasto`: ligado a un `Gasto` (`gasto_id`) con `intervalo_meses`. Próxima = fecha del gasto + período. Al tildar `recurrente` + `periodicidad_meses` en el form de gasto, `GastoController` llama `RecordatorioService::syncDesdeGasto()` que upsertea/borra el recordatorio. "Registrar de nuevo" (`recordatorios.resolver`) clona el gasto a hoy y repunta el recordatorio (auto-avance).
+
+Umbrales en `config/carcare.php` (`recordatorios.aviso_km`/`aviso_dias`). El badge del nav y la tarjeta "Próximos vencimientos" del dashboard usan `contar()`/`avisos()`. El servicio se construye sin red → testeable sin tocar APIs. Tests: `RecordatorioEstadoTest` (unit), `RecordatorioFlowTest` (feature).
+
+## Funcionalidades actuales (inventario)
+
+Lo que la app **ya hace** hoy, para no re-investigar el código en cada sesión:
+
+**Entidades y datos.** `Vehiculo` (marca, modelo, año, patente, km_actual, notas). `CargaCombustible` (fecha, odómetro, litros, costo_total, tanque_lleno, estación, notas + snapshots `usd_blue`/`usd_oficial`). `Mantenimiento` (fecha, odómetro, tipo [8 predefinidos: aceite/filtros/frenos/neumáticos/correa/batería/service/otro], costo, taller, notas + snapshots). `Gasto` (fecha, categoría [8: impuestos/seguro/estacionamiento/multas/peajes/lavado/accesorios/otros], monto, descripción, flag `recurrente` + snapshots). Multi-vehículo con vehículo activo por sesión.
+
+**Cálculos (`VehiculoStats`).** Consumo promedio y del último intervalo (L/100km tanque-lleno a tanque-lleno), km/L, distancia total, costo/km global, precio promedio por litro. Totales por rubro (combustible/mantenimiento/gastos) y general. Gastos por categoría. Gasto mensual últimos 6 meses. Todo consciente de moneda (ARS/USD blue u oficial vía snapshots).
+
+**Recordatorios / avisos.** Recordatorios de mantenimiento por km/fecha (auto-avanzan al cargar el mantenimiento), vencimientos de documentos (seguro/patente/VTV/licencia) y gastos recurrentes con "registrar de nuevo" en 1 clic. Tarjeta "Próximos vencimientos" en el dashboard + badge con contador en el nav. Estado vencido/próximo calculado al vuelo (sin job). Ver sección Arquitectura.
+
+**UI.** Dashboard con tarjeta de avisos + stat cards + gráfico de barras de gasto mensual (6 meses) + tabla gastos por categoría + últimos 5 mantenimientos. Listados paginados (25/pág) con alta/edición/borrado por recurso. Toggle ARS/USD + selector blue/oficial en el nav. Exportación **CSV** por sección (combustible, mantenimientos, gastos) con BOM UTF-8. Flash messages, empty states, confirmaciones de borrado. Mobile-first.
+
+**Auth.** Solo Google OAuth con allow-list `ALLOWED_EMAILS` (falla cerrado). Single-user por cuenta.
+
+**Gaps conocidos (lo que NO tiene).** Sin adjuntos (fotos de tickets, pólizas); sin gráficos de tendencia más allá del barchart mensual; sin filtros por fecha/búsqueda en listados; sin app nativa (es web responsive); sin notificaciones por email/push (los avisos son solo in-app); sin OBD-II/GPS/geolocalización; sin backup/restore más allá del CSV manual; sin import (solo export).
+
 ## Convenciones del proyecto
 
 - **Laravel 13**: los modelos usan atributos PHP (`#[Fillable]`, `#[Hidden]`) y `casts()` como método; los comandos usan `#[Signature]`/`#[Description]`.

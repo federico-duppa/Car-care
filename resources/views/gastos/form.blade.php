@@ -46,13 +46,22 @@
                                       :value="old('descripcion', $gasto->descripcion)" />
                     </div>
 
-                    <label class="flex items-center gap-2">
-                        <input type="hidden" name="recurrente" value="0">
-                        <input type="checkbox" name="recurrente" value="1"
-                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                               @checked(old('recurrente', $gasto->recurrente)) >
-                        <span class="text-sm text-gray-700">Gasto recurrente (seguro mensual, patente anual…)</span>
-                    </label>
+                    <div x-data="{ rec: {{ old('recurrente', $gasto->recurrente) ? 'true' : 'false' }} }">
+                        <label class="flex items-center gap-2">
+                            <input type="hidden" name="recurrente" value="0">
+                            <input type="checkbox" name="recurrente" value="1" x-model="rec"
+                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm text-gray-700">Gasto recurrente (seguro mensual, patente anual…)</span>
+                        </label>
+
+                        <div x-show="rec" x-cloak class="mt-3">
+                            <x-input-label for="periodicidad_meses" value="Se repite cada (meses)" />
+                            <x-text-input id="periodicidad_meses" name="periodicidad_meses" type="number" min="1"
+                                          class="block mt-1 w-32" x-bind:disabled="!rec"
+                                          :value="old('periodicidad_meses', $gasto->periodicidad_meses ?? 1)" />
+                            <p class="mt-1 text-xs text-gray-500">Te avisamos cuando se acerque la próxima y la registrás de nuevo con un clic.</p>
+                        </div>
+                    </div>
 
                     <div class="flex items-center justify-end gap-3 pt-2">
                         <a href="{{ route('gastos.index') }}" class="text-sm text-gray-600">Cancelar</a>

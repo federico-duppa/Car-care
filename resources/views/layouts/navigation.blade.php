@@ -23,6 +23,12 @@
                     <x-nav-link :href="route('gastos.index')" :active="request()->routeIs('gastos.*')">
                         Gastos
                     </x-nav-link>
+                    <x-nav-link :href="route('recordatorios.index')" :active="request()->routeIs('recordatorios.*')">
+                        Avisos
+                        @if(($avisosCount ?? 0) > 0)
+                            <span class="ms-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">{{ $avisosCount }}</span>
+                        @endif
+                    </x-nav-link>
                     <x-nav-link :href="route('vehiculos.index')" :active="request()->routeIs('vehiculos.*')">
                         Vehículos
                     </x-nav-link>
@@ -114,6 +120,12 @@
             <x-responsive-nav-link :href="route('combustible.index')" :active="request()->routeIs('combustible.*')">Combustible</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('mantenimientos.index')" :active="request()->routeIs('mantenimientos.*')">Mantenimiento</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('gastos.index')" :active="request()->routeIs('gastos.*')">Gastos</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('recordatorios.index')" :active="request()->routeIs('recordatorios.*')">
+                Avisos
+                @if(($avisosCount ?? 0) > 0)
+                    <span class="ms-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700">{{ $avisosCount }}</span>
+                @endif
+            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('vehiculos.index')" :active="request()->routeIs('vehiculos.*')">Vehículos</x-responsive-nav-link>
         </div>
 

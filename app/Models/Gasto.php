@@ -14,7 +14,7 @@ class Gasto extends Model
 
     protected $fillable = [
         'user_id', 'vehiculo_id', 'fecha', 'categoria',
-        'monto', 'descripcion', 'recurrente', 'usd_blue', 'usd_oficial',
+        'monto', 'descripcion', 'recurrente', 'periodicidad_meses', 'usd_blue', 'usd_oficial',
     ];
 
     protected function casts(): array
@@ -23,6 +23,7 @@ class Gasto extends Model
             'fecha' => 'date',
             'monto' => 'decimal:2',
             'recurrente' => 'boolean',
+            'periodicidad_meses' => 'integer',
             'usd_blue' => 'decimal:4',
             'usd_oficial' => 'decimal:4',
         ];

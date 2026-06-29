@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehiculo;
+use App\Services\RecordatorioService;
 use App\Services\VehiculoStats;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(private RecordatorioService $recordatorios) {}
+
     public function index(Request $request)
     {
         /** @var Vehiculo|null $vehiculo */
@@ -37,6 +40,7 @@ class DashboardController extends Controller
             'gastoMensual' => $stats->gastoMensual(6),
             'ultimosMantenimientos' => $ultimosMantenimientos,
             'ultimosGastos' => $ultimosGastos,
+            'avisos' => $this->recordatorios->avisos($vehiculo, soloAlertas: true)->take(5),
         ]);
     }
 }

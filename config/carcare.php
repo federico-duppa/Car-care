@@ -29,4 +29,13 @@ return [
     | helper can convert amounts that have no stored rate. Do not set by hand.
     */
     'usd_actual' => null,
+
+    /*
+    | Reminders engine. A reminder is "próximo" (soon) once it is within this
+    | many km or days of its due point, and "vencido" (overdue) once past it.
+    */
+    'recordatorios' => [
+        'aviso_km' => (int) env('CARCARE_AVISO_KM', 500),
+        'aviso_dias' => (int) env('CARCARE_AVISO_DIAS', 14),
+    ],
 ];

@@ -21,6 +21,23 @@
                     </a>
                 </div>
             @else
+                {{-- Reminders / upcoming due --}}
+                @if($avisos->isNotEmpty())
+                    <div class="bg-white shadow-sm sm:rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">Próximos vencimientos</h3>
+                            <a href="{{ route('recordatorios.index') }}" class="text-sm text-indigo-600 hover:underline">Ver todos</a>
+                        </div>
+                        <div class="divide-y">
+                            @foreach($avisos as $r)
+                                <div class="py-2 first:pt-0 last:pb-0">
+                                    @include('recordatorios.partials.estado', ['r' => $r])
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Stat cards --}}
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <x-stat label="Consumo promedio"

@@ -5,8 +5,8 @@ namespace Database\Seeders;
 use App\Models\CargaCombustible;
 use App\Models\Gasto;
 use App\Models\Mantenimiento;
+use App\Models\Recordatorio;
 use App\Models\User;
-use App\Models\Vehiculo;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
@@ -62,10 +62,11 @@ class DatabaseSeeder extends Seeder
             'usd_blue' => 1250, 'usd_oficial' => 1080,
         ]);
 
-        Gasto::create([
+        $seguro = Gasto::create([
             'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id,
             'fecha' => Carbon::now()->subMonth()->toDateString(),
-            'categoria' => 'seguro', 'monto' => 55000, 'descripcion' => 'Cuota mensual', 'recurrente' => true,
+            'categoria' => 'seguro', 'monto' => 55000, 'descripcion' => 'Cuota mensual',
+            'recurrente' => true, 'periodicidad_meses' => 1,
             'usd_blue' => 1430, 'usd_oficial' => 1190,
         ]);
         Gasto::create([
@@ -79,6 +80,28 @@ class DatabaseSeeder extends Seeder
             'fecha' => Carbon::now()->subDays(10)->toDateString(),
             'categoria' => 'peajes', 'monto' => 4800,
             'usd_blue' => 1460, 'usd_oficial' => 1200,
+        ]);
+
+        // Reminders: maintenance by km, document expirations, recurring expense.
+        Recordatorio::create([
+            'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id, 'clase' => 'mantenimiento',
+            'titulo' => 'Cambio de aceite', 'tipo' => 'aceite',
+            'intervalo_km' => 10000, 'intervalo_meses' => 12, 'base_odometro' => $odo - 9800,
+        ]);
+        Recordatorio::create([
+            'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id, 'clase' => 'documento',
+            'titulo' => 'VTV', 'tipo' => 'vtv', 'intervalo_meses' => 12,
+            'base_fecha' => Carbon::now()->addDays(20)->toDateString(),
+        ]);
+        Recordatorio::create([
+            'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id, 'clase' => 'documento',
+            'titulo' => 'Seguro La Caja', 'tipo' => 'seguro', 'numero' => 'POL-99821', 'intervalo_meses' => 12,
+            'base_fecha' => Carbon::now()->subDays(4)->toDateString(),
+        ]);
+        Recordatorio::create([
+            'user_id' => $user->id, 'vehiculo_id' => $vehiculo->id, 'clase' => 'gasto',
+            'titulo' => 'Seguro · Cuota mensual', 'tipo' => 'seguro', 'intervalo_meses' => 1,
+            'gasto_id' => $seguro->id, 'base_fecha' => $seguro->fecha->toDateString(),
         ]);
     }
 }

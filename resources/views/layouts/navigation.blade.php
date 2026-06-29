@@ -116,6 +116,35 @@
             <x-responsive-nav-link :href="route('gastos.index')" :active="request()->routeIs('gastos.*')">Gastos</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('vehiculos.index')" :active="request()->routeIs('vehiculos.*')">Vehículos</x-responsive-nav-link>
         </div>
+
+        <!-- Currency toggle + quote selector (mobile) -->
+        <div class="pt-3 pb-1 border-t border-gray-200 px-4 space-y-2">
+            <div class="text-xs uppercase tracking-wide text-gray-400">Moneda</div>
+            <div class="flex items-center gap-2">
+                <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-sm">
+                    @foreach(['ARS', 'USD'] as $m)
+                        <form method="POST" action="{{ route('moneda.set') }}">
+                            @csrf
+                            <input type="hidden" name="moneda" value="{{ $m }}">
+                            <button class="px-3 py-1.5 {{ ($moneda ?? 'ARS') === $m ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600' }}">{{ $m }}</button>
+                        </form>
+                    @endforeach
+                </div>
+
+                @if(($moneda ?? 'ARS') === 'USD')
+                    <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-sm">
+                        @foreach((array) config('carcare.usd_tipos', ['blue']) as $t)
+                            <form method="POST" action="{{ route('usd_tipo.set') }}">
+                                @csrf
+                                <input type="hidden" name="tipo" value="{{ $t }}">
+                                <button class="px-3 py-1.5 capitalize {{ ($usdTipo ?? 'blue') === $t ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600' }}">{{ $t }}</button>
+                            </form>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>

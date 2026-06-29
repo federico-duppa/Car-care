@@ -41,17 +41,17 @@
                     <x-stat label="Total otros gastos" :value="money_active($stats->totalGastos())" />
                 </div>
 
-                <div class="bg-indigo-600 text-white shadow-sm sm:rounded-lg p-6 flex items-center justify-between">
-                    <div>
+                <div class="bg-indigo-600 text-white shadow-sm sm:rounded-lg p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="min-w-0">
                         <div class="text-indigo-100 text-sm">
                             Gasto total del vehículo
                             @if(current_currency() === 'USD' && ($usdActual ?? null))
                                 <span class="text-indigo-200">· hoy {{ $usdTipo ?? 'blue' }} ${{ number_format($usdActual, 0, ',', '.') }}</span>
                             @endif
                         </div>
-                        <div class="text-3xl font-bold">{{ money_active($stats->totalGeneral()) }}</div>
+                        <div class="text-3xl font-bold break-words">{{ money_active($stats->totalGeneral()) }}</div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2 shrink-0">
                         <a href="{{ route('combustible.create') }}"><x-secondary-button>+ Combustible</x-secondary-button></a>
                         <a href="{{ route('gastos.create') }}"><x-secondary-button>+ Gasto</x-secondary-button></a>
                     </div>

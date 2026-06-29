@@ -32,7 +32,7 @@
                                 <td class="px-4 py-3">{{ \App\Models\Gasto::CATEGORIAS[$g->categoria] ?? ucfirst($g->categoria) }}</td>
                                 <td class="px-4 py-3 text-gray-500">{{ $g->descripcion ?: '—' }}</td>
                                 <td class="px-4 py-3 text-center">{{ $g->recurrente ? '🔁' : '·' }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ money($g->monto) }}</td>
+                                <td class="px-4 py-3 text-right font-medium">{{ show_money($g->montoArs(), $g->usd_rate) }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     <a href="{{ route('gastos.edit', $g) }}" class="text-indigo-600 hover:underline">Editar</a>
                                     <form method="POST" action="{{ route('gastos.destroy', $g) }}" class="inline"

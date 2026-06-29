@@ -2,16 +2,16 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\ExchangeRateService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * For authenticated requests, load the user's vehicles and resolve the
- * "active" one (from session, falling back to the first). Share both with
- * every view so the layout can render the vehicle switcher, and expose the
- * active vehicle on the request for controllers.
+ * For authenticated requests: load the user's vehicles + resolve the active
+ * one, and resolve the active display currency (ARS/USD) plus the current
+ * USD rate used as a fallback for records without a snapshot.
  */
 class ShareVehiculos
 {
@@ -33,6 +33,21 @@ class ShareVehiculos
 
             View::share('vehiculos', $vehiculos);
             View::share('vehiculoActivo', $activo);
+
+            // Currency toggle + current rate.
+            $usdEnabled = (bool) config('carcare.usd_enabled');
+            $moneda = $usdEnabled ? $request->session()->get('moneda', 'ARS') : 'ARS';
+            $usdActual = $usdEnabled ? app(ExchangeRateService::class)->current() : null;
+
+            // Expose the current rate to the show_money() helper.
+            config(['carcare.usd_actual' => $usdActual]);
+
+            $request->attributes->set('moneda', $moneda);
+            $request->attributes->set('usd_actual', $usdActual);
+
+            View::share('moneda', $moneda);
+            View::share('usdActual', $usdActual);
+            View::share('usdEnabled', $usdEnabled);
         }
 
         return $next($request);

@@ -17,7 +17,11 @@ class DashboardController extends Controller
             return view('dashboard', ['vehiculo' => null]);
         }
 
-        $stats = VehiculoStats::for($vehiculo);
+        $stats = VehiculoStats::for(
+            $vehiculo,
+            $request->attributes->get('moneda', 'ARS'),
+            $request->attributes->get('usd_actual'),
+        );
 
         $ultimosMantenimientos = $vehiculo->mantenimientos()
             ->orderByDesc('fecha')->limit(5)->get();

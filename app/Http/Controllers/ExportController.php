@@ -40,10 +40,10 @@ class ExportController extends Controller
 
     private function combustible(Vehiculo $vehiculo): array
     {
-        $headers = ['fecha', 'odometro', 'litros', 'costo_total', 'precio_litro', 'tanque_lleno', 'estacion', 'notas'];
+        $headers = ['fecha', 'odometro', 'litros', 'costo_total', 'precio_litro', 'usd_rate', 'costo_usd', 'tanque_lleno', 'estacion', 'notas'];
         $rows = $vehiculo->cargas()->orderBy('fecha')->get()->map(fn ($c) => [
             $c->fecha->toDateString(), $c->odometro, $c->litros, $c->costo_total,
-            $c->precio_litro, $c->tanque_lleno ? 'si' : 'no', $c->estacion, $c->notas,
+            $c->precio_litro, $c->usd_rate, $c->montoUsd(), $c->tanque_lleno ? 'si' : 'no', $c->estacion, $c->notas,
         ]);
 
         return [$headers, $rows];
@@ -51,9 +51,9 @@ class ExportController extends Controller
 
     private function mantenimientos(Vehiculo $vehiculo): array
     {
-        $headers = ['fecha', 'odometro', 'tipo', 'costo', 'taller', 'notas'];
+        $headers = ['fecha', 'odometro', 'tipo', 'costo', 'usd_rate', 'costo_usd', 'taller', 'notas'];
         $rows = $vehiculo->mantenimientos()->orderBy('fecha')->get()->map(fn ($m) => [
-            $m->fecha->toDateString(), $m->odometro, $m->tipo, $m->costo, $m->taller, $m->notas,
+            $m->fecha->toDateString(), $m->odometro, $m->tipo, $m->costo, $m->usd_rate, $m->montoUsd(), $m->taller, $m->notas,
         ]);
 
         return [$headers, $rows];
@@ -61,9 +61,9 @@ class ExportController extends Controller
 
     private function gastos(Vehiculo $vehiculo): array
     {
-        $headers = ['fecha', 'categoria', 'monto', 'descripcion', 'recurrente'];
+        $headers = ['fecha', 'categoria', 'monto', 'usd_rate', 'monto_usd', 'descripcion', 'recurrente'];
         $rows = $vehiculo->gastos()->orderBy('fecha')->get()->map(fn ($g) => [
-            $g->fecha->toDateString(), $g->categoria, $g->monto, $g->descripcion, $g->recurrente ? 'si' : 'no',
+            $g->fecha->toDateString(), $g->categoria, $g->monto, $g->usd_rate, $g->montoUsd(), $g->descripcion, $g->recurrente ? 'si' : 'no',
         ]);
 
         return [$headers, $rows];

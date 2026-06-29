@@ -30,6 +30,21 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
+                <!-- Currency toggle ARS / USD -->
+                @if(($usdEnabled ?? false))
+                    <div class="flex items-center gap-2" title="{{ ($usdActual ?? null) ? 'Dólar '.config('carcare.dolar_tipo').': $'.number_format($usdActual, 2, ',', '.') : 'Cotización no disponible' }}">
+                        <div class="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs">
+                            @foreach(['ARS', 'USD'] as $m)
+                                <form method="POST" action="{{ route('moneda.set') }}">
+                                    @csrf
+                                    <input type="hidden" name="moneda" value="{{ $m }}">
+                                    <button class="px-2.5 py-1 {{ ($moneda ?? 'ARS') === $m ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' }}">{{ $m }}</button>
+                                </form>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Vehicle switcher -->
                 @if(($vehiculos ?? collect())->count() > 1)
                     <form method="POST" x-data

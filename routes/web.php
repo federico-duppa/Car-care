@@ -22,6 +22,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('gastos', GastoController::class)->except('show');
 
     Route::get('export/{tipo}', [ExportController::class, 'csv'])->name('export.csv');
+
+    // Toggle the display currency (ARS <-> USD), persisted in the session.
+    Route::post('moneda', function (\Illuminate\Http\Request $request) {
+        $moneda = $request->input('moneda') === 'USD' ? 'USD' : 'ARS';
+        $request->session()->put('moneda', $moneda);
+
+        return back();
+    })->name('moneda.set');
 });
 
 require __DIR__.'/auth.php';

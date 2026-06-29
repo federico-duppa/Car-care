@@ -34,20 +34,27 @@ class ShareVehiculos
             View::share('vehiculos', $vehiculos);
             View::share('vehiculoActivo', $activo);
 
-            // Currency toggle + current rate.
-            $usdEnabled = (bool) config('carcare.usd_enabled');
-            $moneda = $usdEnabled ? $request->session()->get('moneda', 'ARS') : 'ARS';
-            $usdActual = $usdEnabled ? app(ExchangeRateService::class)->current() : null;
+            // Currency toggle (ARS/USD) + quote selector (blue/oficial).
+            $tipos = (array) config('carcare.usd_tipos', ['blue']);
+            $moneda = $request->session()->get('moneda', 'ARS') === 'USD' ? 'USD' : 'ARS';
+            $usdTipo = in_array($request->session()->get('usd_tipo'), $tipos, true)
+                ? $request->session()->get('usd_tipo')
+                : ($tipos[0] ?? 'blue');
 
-            // Expose the current rate to the show_money() helper.
+            $usdActuales = app(ExchangeRateService::class)->currentAll();
+            $usdActual = $usdActuales[$usdTipo] ?? null;
+
+            // Expose the active current rate to the show_money() helper.
             config(['carcare.usd_actual' => $usdActual]);
 
             $request->attributes->set('moneda', $moneda);
+            $request->attributes->set('usd_tipo', $usdTipo);
             $request->attributes->set('usd_actual', $usdActual);
 
             View::share('moneda', $moneda);
+            View::share('usdTipo', $usdTipo);
             View::share('usdActual', $usdActual);
-            View::share('usdEnabled', $usdEnabled);
+            View::share('usdActuales', $usdActuales);
         }
 
         return $next($request);

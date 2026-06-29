@@ -14,7 +14,7 @@ class CargaCombustible extends Model
 
     protected $fillable = [
         'user_id', 'vehiculo_id', 'fecha', 'odometro', 'litros',
-        'costo_total', 'tanque_lleno', 'estacion', 'notas', 'usd_rate',
+        'costo_total', 'tanque_lleno', 'estacion', 'notas', 'usd_blue', 'usd_oficial',
     ];
 
     protected function casts(): array
@@ -24,7 +24,8 @@ class CargaCombustible extends Model
             'litros' => 'decimal:2',
             'costo_total' => 'decimal:2',
             'tanque_lleno' => 'boolean',
-            'usd_rate' => 'decimal:4',
+            'usd_blue' => 'decimal:4',
+            'usd_oficial' => 'decimal:4',
         ];
     }
 

@@ -7,22 +7,16 @@ return [
     'currency' => env('APP_CURRENCY', 'ARS'),
 
     /*
-    | USD anchor feature. When enabled, the app fetches the USD/ARS rate so
-    | you can toggle every amount/calculation into USD. Each record stores the
-    | rate of its own date (historical anchor), so old expenses keep their
-    | real USD value regardless of later inflation.
+    | USD anchor. Always on, no configuration required. Each record snapshots
+    | both the blue and official USD/ARS rate of its own date, so old expenses
+    | keep their real USD value regardless of later inflation. A UI toggle picks
+    | ARS vs USD and which quote (blue/oficial) to convert with.
     */
-    'usd_enabled' => filter_var(env('CARCARE_USD_ENABLED', true), FILTER_VALIDATE_BOOL),
-
-    /*
-    | Which quote to use: blue | oficial | bolsa | contadoconliqui | mayorista.
-    | "blue" is the usual purchasing-power anchor in Argentina.
-    */
-    'dolar_tipo' => env('CARCARE_DOLAR_TIPO', 'blue'),
+    'usd_tipos' => ['blue', 'oficial'],
 
     /*
     | Rate API endpoints (dolarapi.com for current, argentinadatos for history).
-    | Both are free and need no key. Production must allow outbound HTTPS to them.
+    | Both are free and need no key. Defaults work out of the box.
     */
     'rate_api' => [
         'current' => env('CARCARE_RATE_API_CURRENT', 'https://dolarapi.com/v1/dolares'),

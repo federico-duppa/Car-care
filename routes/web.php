@@ -30,6 +30,16 @@ Route::middleware('auth')->group(function () {
 
         return back();
     })->name('moneda.set');
+
+    // Choose which USD quote to convert with (blue / oficial).
+    Route::post('usd-tipo', function (\Illuminate\Http\Request $request) {
+        $tipos = (array) config('carcare.usd_tipos', ['blue']);
+        $tipo = in_array($request->input('tipo'), $tipos, true) ? $request->input('tipo') : ($tipos[0] ?? 'blue');
+        $request->session()->put('usd_tipo', $tipo);
+        $request->session()->put('moneda', 'USD'); // choosing a quote implies USD view
+
+        return back();
+    })->name('usd_tipo.set');
 });
 
 require __DIR__.'/auth.php';

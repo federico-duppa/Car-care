@@ -20,6 +20,7 @@ class DashboardController extends Controller
         $stats = VehiculoStats::for(
             $vehiculo,
             $request->attributes->get('moneda', 'ARS'),
+            $request->attributes->get('usd_tipo', 'blue'),
             $request->attributes->get('usd_actual'),
         );
 

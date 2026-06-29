@@ -32,7 +32,7 @@
                                 <td class="px-4 py-3">{{ \App\Models\Mantenimiento::TIPOS[$m->tipo] ?? ucfirst($m->tipo) }}</td>
                                 <td class="px-4 py-3 text-right">{{ km($m->odometro) }}</td>
                                 <td class="px-4 py-3 text-gray-500">{{ $m->taller ?: '—' }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ show_money($m->montoArs(), $m->usd_rate) }}</td>
+                                <td class="px-4 py-3 text-right font-medium">{{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     <a href="{{ route('mantenimientos.edit', $m) }}" class="text-indigo-600 hover:underline">Editar</a>
                                     <form method="POST" action="{{ route('mantenimientos.destroy', $m) }}" class="inline"

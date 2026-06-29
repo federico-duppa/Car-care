@@ -8,73 +8,87 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Fetches the USD/ARS rate (default: dólar blue) used as an inflation anchor.
- *
- * - current(): the latest rate, cached for a few hours.
- * - forDate(): the rate on a given date (historical). Past dates are
- *   immutable so they're cached basically forever; today/future fall back to
- *   current().
- *
- * Every network failure degrades gracefully to null — saving an expense or
- * rendering a page must never break because the rate API is down.
+ * Fetches the USD/ARS rate (blue or oficial) used as an inflation anchor.
+ * Always available — no enable flag. Every network failure degrades to null
+ * so saving an expense or rendering a page never breaks.
  */
 class ExchangeRateService
 {
-    private string $tipo;
-
-    public function __construct(?string $tipo = null)
+    /** Latest rate for a quote (mid of buy/sell), or null. */
+    public function current(string $tipo = 'blue'): ?float
     {
-        $this->tipo = $tipo ?: (string) config('carcare.dolar_tipo', 'blue');
-    }
-
-    /** Latest rate (mid of buy/sell), or null. */
-    public function current(): ?float
-    {
-        if (! config('carcare.usd_enabled')) {
+        if (app()->runningUnitTests()) {
             return null;
         }
 
-        return Cache::remember("usd_rate:current:{$this->tipo}", now()->addHours(6), function () {
+        $tipo = $this->normalize($tipo);
+
+        return Cache::remember("usd:current:{$tipo}", now()->addHours(6), function () use ($tipo) {
             $base = rtrim((string) config('carcare.rate_api.current'), '/');
 
-            return $this->extract($this->get("{$base}/{$this->tipo}"));
+            return $this->extract($this->get("{$base}/{$tipo}"));
         });
     }
 
-    /** Rate on a specific date (historical anchor), or null. */
-    public function forDate(Carbon|string $date): ?float
+    /** Latest rates for every supported quote: ['blue' => x, 'oficial' => y]. */
+    public function currentAll(): array
     {
-        if (! config('carcare.usd_enabled')) {
+        $out = [];
+        foreach ((array) config('carcare.usd_tipos', ['blue']) as $tipo) {
+            $out[$tipo] = $this->current($tipo);
+        }
+
+        return $out;
+    }
+
+    /** Rate on a specific date (historical anchor) for a quote, or null. */
+    public function forDate(Carbon|string $date, string $tipo = 'blue'): ?float
+    {
+        if (app()->runningUnitTests()) {
             return null;
         }
 
+        $tipo = $this->normalize($tipo);
         $date = $date instanceof Carbon ? $date : Carbon::parse($date);
 
-        // Today or the future: use the live rate.
         if ($date->isToday() || $date->isFuture()) {
-            return $this->current();
+            return $this->current($tipo);
         }
 
-        $key = "usd_rate:{$this->tipo}:{$date->toDateString()}";
+        $key = "usd:{$tipo}:{$date->toDateString()}";
 
-        return Cache::remember($key, now()->addDays(30), function () use ($date) {
+        return Cache::remember($key, now()->addDays(30), function () use ($date, $tipo) {
             $base = rtrim((string) config('carcare.rate_api.history'), '/');
-            $path = $date->format('Y/m/d');
-            $rate = $this->extract($this->get("{$base}/{$this->tipo}/{$path}"));
+            $rate = $this->extract($this->get("{$base}/{$tipo}/{$date->format('Y/m/d')}"));
 
-            // Some past dates (weekends/holidays) have no quote; use current
-            // as a reasonable fallback rather than storing nothing.
-            return $rate ?? $this->current();
+            // Weekends/holidays have no quote; fall back to the current rate.
+            return $rate ?? $this->current($tipo);
         });
     }
 
-    /** Perform the HTTP GET, returning decoded JSON array or null. */
+    /** Historical rates for every supported quote on a date. */
+    public function forDateAll(Carbon|string $date): array
+    {
+        $out = [];
+        foreach ((array) config('carcare.usd_tipos', ['blue']) as $tipo) {
+            $out[$tipo] = $this->forDate($date, $tipo);
+        }
+
+        return $out;
+    }
+
+    private function normalize(string $tipo): string
+    {
+        $tipos = (array) config('carcare.usd_tipos', ['blue']);
+
+        return in_array($tipo, $tipos, true) ? $tipo : ($tipos[0] ?? 'blue');
+    }
+
     private function get(string $url): ?array
     {
         try {
             $res = Http::timeout((int) config('carcare.rate_api.timeout', 4))
-                ->acceptJson()
-                ->get($url);
+                ->acceptJson()->get($url);
 
             return $res->successful() ? (array) $res->json() : null;
         } catch (\Throwable $e) {
@@ -91,7 +105,6 @@ class ExchangeRateService
             return null;
         }
 
-        // Some endpoints return a list; take the first entry.
         if (array_is_list($data)) {
             $data = $data[0] ?? [];
         }

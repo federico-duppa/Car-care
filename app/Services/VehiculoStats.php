@@ -9,20 +9,23 @@ use Illuminate\Support\Carbon;
  * Derived statistics for a vehicle: fuel consumption (full-to-full), cost per
  * km and spending totals. Amounts are returned in the requested currency:
  * 'ARS' uses raw pesos; 'USD' converts each record by its own snapshotted
- * historical rate (usd_rate), falling back to a supplied current rate for
- * records without a snapshot.
+ * historical rate for the chosen quote (blue/oficial), falling back to a
+ * supplied current rate for records without a snapshot.
  */
 class VehiculoStats
 {
+    private const USD_COLS = ['blue' => 'usd_blue', 'oficial' => 'usd_oficial'];
+
     public function __construct(
         private Vehiculo $vehiculo,
         private string $moneda = 'ARS',
+        private string $tipo = 'blue',
         private ?float $fallbackRate = null,
     ) {}
 
-    public static function for(Vehiculo $vehiculo, string $moneda = 'ARS', ?float $fallbackRate = null): self
+    public static function for(Vehiculo $vehiculo, string $moneda = 'ARS', string $tipo = 'blue', ?float $fallbackRate = null): self
     {
-        return new self($vehiculo, $moneda, $fallbackRate);
+        return new self($vehiculo, $moneda, $tipo, $fallbackRate);
     }
 
     // ---- Consumption (currency-independent) --------------------------------
@@ -158,13 +161,14 @@ class VehiculoStats
         ];
 
         foreach ($fuentes as [$query, $col]) {
+            $rateCol = $this->rateCol();
             $rows = $query->where('fecha', '>=', $desde->toDateString())
-                ->get(['fecha', $col, 'usd_rate']);
+                ->get(['fecha', $col, $rateCol]);
 
             foreach ($rows as $row) {
                 $key = Carbon::parse($row->fecha)->format('Y-m');
                 if (isset($series[$key])) {
-                    $series[$key] += $this->convertir((float) $row->{$col}, $row->usd_rate);
+                    $series[$key] += $this->convertir((float) $row->{$col}, $row->{$rateCol});
                 }
             }
         }
@@ -183,6 +187,12 @@ class VehiculoStats
             ->selectRaw("{$expr} as agg", $bind)->value('agg'), 2);
     }
 
+    /** Snapshot column for the active quote. */
+    private function rateCol(): string
+    {
+        return self::USD_COLS[$this->tipo] ?? 'usd_blue';
+    }
+
     /** SQL aggregate expression (+ bindings) for the active currency. */
     private function montoExpr(string $col): array
     {
@@ -190,14 +200,15 @@ class VehiculoStats
             return ["COALESCE(SUM({$col}), 0)", []];
         }
 
+        $rate = $this->rateCol();
         $fb = ($this->fallbackRate && $this->fallbackRate > 0) ? $this->fallbackRate : null;
 
         if ($fb === null) {
             // No current-rate fallback: only count rows that have a snapshot.
-            return ["COALESCE(SUM(CASE WHEN usd_rate > 0 THEN {$col} / usd_rate ELSE 0 END), 0)", []];
+            return ["COALESCE(SUM(CASE WHEN {$rate} > 0 THEN {$col} / {$rate} ELSE 0 END), 0)", []];
         }
 
-        return ["COALESCE(SUM({$col} / COALESCE(NULLIF(usd_rate, 0), ?)), 0)", [$fb]];
+        return ["COALESCE(SUM({$col} / COALESCE(NULLIF({$rate}, 0), ?)), 0)", [$fb]];
     }
 
     /** Convert a single ARS amount per the active currency. */

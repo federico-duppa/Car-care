@@ -19,6 +19,17 @@ if (! function_exists('current_currency')) {
     }
 }
 
+if (! function_exists('current_usd_tipo')) {
+    /** Active USD quote for the request: 'blue' or 'oficial'. */
+    function current_usd_tipo(): string
+    {
+        $tipos = (array) config('carcare.usd_tipos', ['blue']);
+        $tipo = session('usd_tipo', $tipos[0] ?? 'blue');
+
+        return in_array($tipo, $tipos, true) ? $tipo : ($tipos[0] ?? 'blue');
+    }
+}
+
 if (! function_exists('show_money')) {
     /**
      * Format an ARS amount in the active display currency. In USD mode it uses

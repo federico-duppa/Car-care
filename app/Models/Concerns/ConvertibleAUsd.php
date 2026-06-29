@@ -5,43 +5,54 @@ namespace App\Models\Concerns;
 use App\Services\ExchangeRateService;
 
 /**
- * Shared USD conversion for money-bearing models. Each model must implement
- * montoArs() returning its peso amount; the stored usd_rate is the ARS/USD
- * rate captured on the record's date.
- *
- * On save, the rate for the record's date is fetched and snapshotted, so the
- * USD value is historical and permanent. Failures degrade to null silently.
+ * Shared USD conversion for money-bearing models. Each model implements
+ * montoArs() returning its peso amount. On save we snapshot the ARS/USD rate
+ * (blue and oficial) for the record's date, so its USD value is historical and
+ * permanent. Failures degrade to null silently.
  */
 trait ConvertibleAUsd
 {
+    /** Columns holding the snapshotted rate per quote. */
+    private const USD_COLS = ['blue' => 'usd_blue', 'oficial' => 'usd_oficial'];
+
     /** Peso amount of this record. */
     abstract public function montoArs(): float;
 
     public static function bootConvertibleAUsd(): void
     {
         static::saving(function ($model) {
-            if (! config('carcare.usd_enabled') || empty($model->fecha)) {
+            if (app()->runningUnitTests() || empty($model->fecha)) {
                 return;
             }
 
-            // Snapshot when missing, or refresh if the date changed on an
-            // existing record (on insert, 'fecha' is always dirty).
-            if (empty($model->usd_rate) || ($model->exists && $model->isDirty('fecha'))) {
-                $rate = app(ExchangeRateService::class)->forDate($model->fecha);
-                if ($rate) {
-                    $model->usd_rate = $rate;
+            $dateChanged = $model->exists && $model->isDirty('fecha');
+
+            foreach (self::USD_COLS as $tipo => $col) {
+                if (empty($model->{$col}) || $dateChanged) {
+                    $rate = app(ExchangeRateService::class)->forDate($model->fecha, $tipo);
+                    if ($rate) {
+                        $model->{$col} = $rate;
+                    }
                 }
             }
         });
     }
 
-    /**
-     * USD value using the record's own historical rate, or a supplied
-     * fallback (e.g. the current rate) for records without a snapshot.
-     */
-    public function montoUsd(?float $fallbackRate = null): ?float
+    /** Stored rate for a quote ('blue' | 'oficial'), or null. */
+    public function usdRate(string $tipo): ?float
     {
-        $rate = $this->usd_rate ?: $fallbackRate;
+        $col = self::USD_COLS[$tipo] ?? 'usd_blue';
+
+        return $this->{$col} ? (float) $this->{$col} : null;
+    }
+
+    /**
+     * USD value using this record's own historical rate for the given quote,
+     * or a supplied fallback (e.g. the current rate) when there's no snapshot.
+     */
+    public function montoUsd(string $tipo = 'blue', ?float $fallbackRate = null): ?float
+    {
+        $rate = $this->usdRate($tipo) ?: $fallbackRate;
 
         return ($rate && $rate > 0) ? round($this->montoArs() / $rate, 2) : null;
     }

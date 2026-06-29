@@ -23,7 +23,7 @@ Construida con **Laravel 13 + Blade + Tailwind**, pensada para deployar en
   Cada gasto guarda la cotización del dólar **de su fecha** (snapshot histórico),
   así un gasto viejo se ve en USD a lo que realmente costó entonces y no se
   distorsiona con la inflación posterior.
-- **Export CSV** de cada sección (incluye `usd_rate` y el monto en USD).
+- **Export CSV** de cada sección (incluye las cotizaciones `usd_blue` y `usd_oficial`).
 - **Login con Google** restringido por la variable `ALLOWED_EMAILS`.
 
 ## Cómo funciona el login (importante)
@@ -68,12 +68,14 @@ php artisan test
 ## Ancla en dólares (inflación)
 
 En Argentina medir gastos en pesos a lo largo del tiempo no sirve como ancla.
-La app resuelve esto guardando, por cada gasto, la cotización del dólar
-(blue por defecto) **del día de ese gasto** en la columna `usd_rate`. El monto
-en USD de cada registro queda fijo e histórico. El toggle ARS/USD de la barra
-recalcula todos los totales sumando el USD por fila.
+La app resuelve esto guardando, por cada gasto, la cotización del dólar **del
+día de ese gasto** — tanto **blue** como **oficial** (columnas `usd_blue` y
+`usd_oficial`). El monto en USD de cada registro queda fijo e histórico.
 
-- Se configura con `CARCARE_USD_ENABLED=true` y `CARCARE_DOLAR_TIPO=blue`.
+La feature **siempre está activa, no requiere configuración**. En la barra hay
+un toggle **ARS/USD** y, al lado, un selector **blue/oficial** para elegir con
+qué cotización convertir. Los totales se recalculan sumando el USD por fila.
+
 - Cotizaciones: [dolarapi.com](https://dolarapi.com) (actual) y
   [argentinadatos.com](https://argentinadatos.com) (histórica). Gratis, sin API
   key. **Producción debe permitir salida HTTPS a esos hosts** (Laravel Cloud lo
@@ -126,10 +128,6 @@ recalcula todos los totales sumando el USD por fila.
    GOOGLE_CLIENT_SECRET=...
    GOOGLE_REDIRECT_URI=https://TU-DOMINIO/auth/google/callback
    APP_CURRENCY=ARS
-
-   # Ancla en dólares
-   CARCARE_USD_ENABLED=true
-   CARCARE_DOLAR_TIPO=blue
    ```
 4. **Comando de build**: `npm ci && npm run build`
 5. **Comando de deploy** (post-deploy): `php artisan migrate --force`

@@ -14,7 +14,7 @@ class Mantenimiento extends Model
 
     protected $fillable = [
         'user_id', 'vehiculo_id', 'fecha', 'odometro', 'tipo',
-        'costo', 'taller', 'notas', 'usd_rate',
+        'costo', 'taller', 'notas', 'usd_blue', 'usd_oficial',
     ];
 
     protected function casts(): array
@@ -22,7 +22,8 @@ class Mantenimiento extends Model
         return [
             'fecha' => 'date',
             'costo' => 'decimal:2',
-            'usd_rate' => 'decimal:4',
+            'usd_blue' => 'decimal:4',
+            'usd_oficial' => 'decimal:4',
         ];
     }
 

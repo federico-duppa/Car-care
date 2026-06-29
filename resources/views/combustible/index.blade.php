@@ -42,8 +42,8 @@
                                 <td class="px-4 py-3">{{ $c->fecha->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 text-right">{{ km($c->odometro) }}</td>
                                 <td class="px-4 py-3 text-right">{{ number_format($c->litros, 2, ',', '.') }}</td>
-                                <td class="px-4 py-3 text-right">{{ $c->precio_litro !== null ? show_money($c->precio_litro, $c->usd_rate) : '—' }}</td>
-                                <td class="px-4 py-3 text-right font-medium">{{ show_money($c->montoArs(), $c->usd_rate) }}</td>
+                                <td class="px-4 py-3 text-right">{{ $c->precio_litro !== null ? show_money($c->precio_litro, $c->usdRate(current_usd_tipo())) : '—' }}</td>
+                                <td class="px-4 py-3 text-right font-medium">{{ show_money($c->montoArs(), $c->usdRate(current_usd_tipo())) }}</td>
                                 <td class="px-4 py-3 text-center">{{ $c->tanque_lleno ? '✓' : '·' }}</td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
                                     <a href="{{ route('combustible.edit', $c) }}" class="text-indigo-600 hover:underline">Editar</a>

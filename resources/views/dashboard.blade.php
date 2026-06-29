@@ -46,7 +46,7 @@
                         <div class="text-indigo-100 text-sm">
                             Gasto total del vehículo
                             @if(current_currency() === 'USD' && ($usdActual ?? null))
-                                <span class="text-indigo-200">· hoy {{ config('carcare.dolar_tipo') }} ${{ number_format($usdActual, 0, ',', '.') }}</span>
+                                <span class="text-indigo-200">· hoy {{ $usdTipo ?? 'blue' }} ${{ number_format($usdActual, 0, ',', '.') }}</span>
                             @endif
                         </div>
                         <div class="text-3xl font-bold">{{ money_active($stats->totalGeneral()) }}</div>
@@ -95,7 +95,7 @@
                             <div class="flex justify-between py-1 border-b last:border-0 text-sm">
                                 <span class="text-gray-600">{{ \App\Models\Mantenimiento::TIPOS[$m->tipo] ?? ucfirst($m->tipo) }}
                                     <span class="text-gray-400">· {{ $m->fecha->format('d/m/Y') }}</span></span>
-                                <span class="font-medium">{{ show_money($m->montoArs(), $m->usd_rate) }}</span>
+                                <span class="font-medium">{{ show_money($m->montoArs(), $m->usdRate(current_usd_tipo())) }}</span>
                             </div>
                         @empty
                             <p class="text-sm text-gray-400">Sin mantenimientos cargados.</p>

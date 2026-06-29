@@ -7,10 +7,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * ARS per 1 USD on the expense date (snapshot taken at save time).
-     * Nullable: rows created before this feature, or saved while the rate
-     * API was unreachable, simply have no snapshot and fall back to the
-     * current rate when displayed in USD.
+     * ARS per 1 USD on the expense date, snapshotted at save time for both the
+     * blue and the official quote. Nullable: rows saved while the rate API was
+     * unreachable simply have no snapshot and fall back to the current rate.
      */
     private array $tables = ['carga_combustibles', 'mantenimientos', 'gastos'];
 
@@ -18,7 +17,8 @@ return new class extends Migration
     {
         foreach ($this->tables as $name) {
             Schema::table($name, function (Blueprint $table) {
-                $table->decimal('usd_rate', 12, 4)->nullable()->after('id');
+                $table->decimal('usd_blue', 12, 4)->nullable()->after('id');
+                $table->decimal('usd_oficial', 12, 4)->nullable()->after('usd_blue');
             });
         }
     }
@@ -27,7 +27,7 @@ return new class extends Migration
     {
         foreach ($this->tables as $name) {
             Schema::table($name, function (Blueprint $table) {
-                $table->dropColumn('usd_rate');
+                $table->dropColumn(['usd_blue', 'usd_oficial']);
             });
         }
     }

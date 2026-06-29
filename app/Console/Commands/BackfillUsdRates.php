@@ -16,22 +16,32 @@ class BackfillUsdRates extends Command
 {
     public function handle(ExchangeRateService $rates): int
     {
-        if (! config('carcare.usd_enabled')) {
-            $this->warn('USD feature disabled (CARCARE_USD_ENABLED=false). Nothing to do.');
-
-            return self::SUCCESS;
-        }
-
+        $cols = ['blue' => 'usd_blue', 'oficial' => 'usd_oficial'];
         $total = 0;
 
         foreach ([CargaCombustible::class, Mantenimiento::class, Gasto::class] as $model) {
-            $rows = $model::whereNull('usd_rate')->whereNotNull('fecha')->get();
-            $this->info(class_basename($model).': '.$rows->count().' registros sin cotización.');
+            $rows = $model::whereNotNull('fecha')
+                ->where(function ($q) use ($cols) {
+                    foreach ($cols as $col) {
+                        $q->orWhereNull($col);
+                    }
+                })->get();
+
+            $this->info(class_basename($model).': '.$rows->count().' registros sin cotización completa.');
 
             foreach ($rows as $row) {
-                $rate = $rates->forDate($row->fecha);
-                if ($rate) {
-                    $row->usd_rate = $rate;
+                $changed = false;
+                foreach ($cols as $tipo => $col) {
+                    if (empty($row->{$col})) {
+                        $rate = $rates->forDate($row->fecha, $tipo);
+                        if ($rate) {
+                            $row->{$col} = $rate;
+                            $changed = true;
+                        }
+                    }
+                }
+
+                if ($changed) {
                     $row->saveQuietly();
                     $total++;
                 } else {

@@ -59,6 +59,20 @@ Cada registro de dinero (`CargaCombustible`, `Mantenimiento`, `Gasto`) pertenece
 
 **Cotizaciones (`app/Services/ExchangeRateService.php`).** Siempre activo, sin variable de entorno. Actual desde dolarapi.com, histórica desde argentinadatos.com. Cacheado, **a prueba de fallos** (cualquier error → null, nunca rompe un guardado ni un render). Se auto-desactiva en tests (`app()->runningUnitTests()`) para no tocar la red; por eso las pruebas de conversión setean `usd_blue`/`usd_oficial` a mano.
 
+## Funcionalidades actuales (inventario)
+
+Lo que la app **ya hace** hoy, para no re-investigar el código en cada sesión:
+
+**Entidades y datos.** `Vehiculo` (marca, modelo, año, patente, km_actual, notas). `CargaCombustible` (fecha, odómetro, litros, costo_total, tanque_lleno, estación, notas + snapshots `usd_blue`/`usd_oficial`). `Mantenimiento` (fecha, odómetro, tipo [8 predefinidos: aceite/filtros/frenos/neumáticos/correa/batería/service/otro], costo, taller, notas + snapshots). `Gasto` (fecha, categoría [8: impuestos/seguro/estacionamiento/multas/peajes/lavado/accesorios/otros], monto, descripción, flag `recurrente` + snapshots). Multi-vehículo con vehículo activo por sesión.
+
+**Cálculos (`VehiculoStats`).** Consumo promedio y del último intervalo (L/100km tanque-lleno a tanque-lleno), km/L, distancia total, costo/km global, precio promedio por litro. Totales por rubro (combustible/mantenimiento/gastos) y general. Gastos por categoría. Gasto mensual últimos 6 meses. Todo consciente de moneda (ARS/USD blue u oficial vía snapshots).
+
+**UI.** Dashboard con stat cards + gráfico de barras de gasto mensual (6 meses) + tabla gastos por categoría + últimos 5 mantenimientos. Listados paginados (25/pág) con alta/edición/borrado por recurso. Toggle ARS/USD + selector blue/oficial en el nav. Exportación **CSV** por sección (combustible, mantenimientos, gastos) con BOM UTF-8. Flash messages, empty states, confirmaciones de borrado. Mobile-first.
+
+**Auth.** Solo Google OAuth con allow-list `ALLOWED_EMAILS` (falla cerrado). Single-user por cuenta.
+
+**Gaps conocidos (lo que NO tiene).** Sin recordatorios/alertas de mantenimiento por km o fecha; sin vencimientos de seguro/patente/VTV; sin adjuntos (fotos de tickets, pólizas); sin gráficos de tendencia más allá del barchart mensual; sin filtros por fecha/búsqueda en listados; sin app nativa (es web responsive); sin módulo de documentos; sin OBD-II/GPS/geolocalización; sin backup/restore más allá del CSV manual; sin import (solo export).
+
 ## Convenciones del proyecto
 
 - **Laravel 13**: los modelos usan atributos PHP (`#[Fillable]`, `#[Hidden]`) y `casts()` como método; los comandos usan `#[Signature]`/`#[Description]`.

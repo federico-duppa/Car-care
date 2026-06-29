@@ -34,9 +34,10 @@
                     </div>
 
                     <div>
-                        <x-input-label for="monto" value="Monto" />
+                        <x-input-label for="monto" value="Monto (ARS)" />
                         <x-text-input id="monto" name="monto" type="number" step="0.01" class="block mt-1 w-full"
                                       :value="old('monto', $gasto->monto)" required />
+                        <p class="mt-1 text-xs text-gray-500">Ingresá el monto en pesos (ARS). Después podés verlo en USD con el toggle.</p>
                     </div>
 
                     <div>

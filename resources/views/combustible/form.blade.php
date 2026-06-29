@@ -36,11 +36,12 @@
                                           :value="old('litros', $carga->litros)" required />
                         </div>
                         <div>
-                            <x-input-label for="costo_total" value="Costo total" />
+                            <x-input-label for="costo_total" value="Costo total (ARS)" />
                             <x-text-input id="costo_total" name="costo_total" type="number" step="0.01" class="block mt-1 w-full"
                                           :value="old('costo_total', $carga->costo_total)" required />
                         </div>
                     </div>
+                    <p class="-mt-2 text-xs text-gray-500">Los montos se ingresan en pesos (ARS).</p>
 
                     <div>
                         <x-input-label for="estacion" value="Estación (opcional)" />
